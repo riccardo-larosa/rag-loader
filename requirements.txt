@@ -1,0 +1,3 @@
+pymongo
+langchain_openai
+python-dotenv
