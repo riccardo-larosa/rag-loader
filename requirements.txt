@@ -5,3 +5,5 @@ langchain_community
 langchain_mongodb
 pymongo
 GitPython
+unstructured
+markdown
