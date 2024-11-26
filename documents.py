@@ -79,6 +79,9 @@ def clone_repo(git_repo_url, temp_repo_path="~/temp_repo"):
     return True
 
 def split_documents(chunk_size, documents: list[Document]):
+    print(f"Splitting {len(documents)} documents into chunks of {chunk_size} characters")
+    # for doc in documents:
+    #     print(f"Document: {doc.page_content}")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_size * 0.1,

@@ -24,6 +24,8 @@ def calculate_chunk_ids(chunks):
     for chunk in chunks:
         # print all the metadata
         print(chunk.metadata)
+        # print(chunk.page_content)
+        
         source = chunk.metadata.get("source")
         last_commit_date = chunk.metadata.get("last_commit_date") 
         current_page_id = f"{source}"
@@ -56,7 +58,7 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
     # Create dictionaries for existing items
     existing_items_dict = {item["id"]: {"last_commit_date": item["last_commit_date"], "source": item["source"]} 
                             for item in existing_items}
-    existing_ids = set(existing_items_dict.keys())
+    # existing_ids = set(existing_items_dict.keys())
     
     # Track new/updated chunks and chunks to delete
     new_chunks = []
@@ -108,7 +110,6 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
     if len(to_delete_chunks):
         print(f"🗑️ Deleting outdated documents: {len(to_delete_chunks)}")
         print(f"to_delete_chunks: {to_delete_chunks}")
-        # TODO: Implement deletion logic here
         atlas_collection.delete_many({"id": {"$in": to_delete_chunks}})
     
     # Handle additions if any
@@ -117,6 +118,7 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
         new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
         print(f"new_chunk_ids: {new_chunk_ids}")
         db.add_documents(new_chunks, ids=new_chunk_ids)
+        print(f"chunks added: {new_chunks}")
     else:
         print("✅ No new documents to add")
 
@@ -171,14 +173,19 @@ def main():
             print("Failed to connect to MongoDB Atlas")
             return
         
-    git_repo_url = "https://github.com/elasticpath/elasticpath-dev.git"
+    #git_repo_url = "https://github.com/elasticpath/elasticpath-dev.git"
     temp_repo_path = os.path.expanduser("~/temp_repo")
-    directory_to_load = "docs/carts-orders"
+    # values for Learn
+    # git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/playground/learn.git"
+    # directory_to_load = "docs/getting-started-with-pxm"
+    # values for Commerce Manager
+    git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
+    directory_to_load = "docs/commerce-manager"
     print(f"Processing MD files from {git_repo_url} repo for {directory_to_load} directory")    
-    #cloned = clone_repo(git_repo_url, temp_repo_path)
-    #if not cloned:
-    #    print("Failed to clone the repository")
-    #    return
+    # cloned = clone_repo(git_repo_url, temp_repo_path)
+    # if not cloned:
+    #     print("Failed to clone the repository")
+    #     return
     
     documents = load_md_files(temp_repo_path, directory_to_load)
     chunks = split_documents(args.chunk_size, documents)
