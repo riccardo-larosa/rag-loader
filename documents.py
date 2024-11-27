@@ -39,7 +39,7 @@ def load_md_files(temp_repo_path, directory_to_load):
                 print(f"No git history found for {file_path}")
         
         # Load each .md file using LangChain's TextLoader
-        print(f"Loading {file_path}")
+        #print(f"Loading {file_path}")
         loader = TextLoader(file_path)
         file_documents = loader.load()
         for doc in file_documents:
@@ -67,7 +67,7 @@ def clone_repo(git_repo_url, temp_repo_path="~/temp_repo"):
             git_repo_url, 
             temp_repo_path,
             progress=Progress(),
-            depth=1  # Shallow clone for faster download
+            depth=None  
         )
 
         print(f"\n✅ Repository cloned successfully in {temp_repo_path}")

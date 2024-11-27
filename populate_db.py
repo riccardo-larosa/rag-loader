@@ -22,8 +22,7 @@ def calculate_chunk_ids(chunks):
     current_chunk_index = 0
 
     for chunk in chunks:
-        # print all the metadata
-        print(chunk.metadata)
+        
         # print(chunk.page_content)
         
         source = chunk.metadata.get("source")
@@ -35,6 +34,8 @@ def calculate_chunk_ids(chunks):
             current_chunk_index += 1
         else:
             current_chunk_index = 0
+            # print all the metadata, just for the first time
+            print(chunk.metadata)
 
         # Calculate the chunk ID.
         chunk_id = f"{current_page_id}:{current_chunk_index}"
@@ -116,9 +117,9 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
     if len(new_chunks):
         print(f"👉 Adding new/updated documents: {len(new_chunks)}")
         new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
-        print(f"new_chunk_ids: {new_chunk_ids}")
+        #print(f"new_chunk_ids: {new_chunk_ids}")
         db.add_documents(new_chunks, ids=new_chunk_ids)
-        print(f"chunks added: {new_chunks}")
+        #print(f"chunks added: {new_chunks}")
     else:
         print("✅ No new documents to add")
 
@@ -173,19 +174,35 @@ def main():
             print("Failed to connect to MongoDB Atlas")
             return
         
-    #git_repo_url = "https://github.com/elasticpath/elasticpath-dev.git"
     temp_repo_path = os.path.expanduser("~/temp_repo")
-    # values for Learn
-    # git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/playground/learn.git"
-    # directory_to_load = "docs/getting-started-with-pxm"
-    # values for Commerce Manager
-    git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
-    directory_to_load = "docs/commerce-manager"
+    git_repo_url = ""
+    directory_to_load = ""
+    ##### Commerce Cloud #####
+    # Learn
+    git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/playground/learn.git"
+    directory_to_load = "docs/getting-started-with-pxm"
+    # Commerce Manager -- Note: remove docs/commerce-manager/promotions-standard 
+    #git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
+    #directory_to_load = "docs/commerce-manager"
+    # Composer
+    # directory_to_load = "docs/composer"
+    # Developer Tools
+    #directory_to_load = "docs/developer-tools"
+    # Payments
+    #directory_to_load = "docs/payments"
+    # Guides
+    #directory_to_load = "guides"
+    
+    
+    ##### EPSM #####
+    #git_repo_url = "git@gitlab.elasticpath.com:commerce/docs-commerce.git"
+    #directory_to_load = "website/versioned_docs"
+    
     print(f"Processing MD files from {git_repo_url} repo for {directory_to_load} directory")    
-    # cloned = clone_repo(git_repo_url, temp_repo_path)
-    # if not cloned:
-    #     print("Failed to clone the repository")
-    #     return
+    cloned = clone_repo(git_repo_url, temp_repo_path)
+    if not cloned:
+        print("Failed to clone the repository")
+        return
     
     documents = load_md_files(temp_repo_path, directory_to_load)
     chunks = split_documents(args.chunk_size, documents)
