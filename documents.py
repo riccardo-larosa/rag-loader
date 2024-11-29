@@ -78,6 +78,40 @@ def clone_repo(git_repo_url, temp_repo_path="~/temp_repo"):
 
     return True
 
+def calculate_chunk_ids(chunks):
+
+    # This will create IDs like "docs/commerce-manager/index.mdx:2 
+    # Page Source : Chunk Index and add the updated_date_time to the metadata
+
+    last_page_id = None
+    current_chunk_index = 0
+
+    for chunk in chunks:
+        
+        # print(chunk.page_content)
+        
+        source = chunk.metadata.get("source")
+        last_commit_date = chunk.metadata.get("last_commit_date") 
+        current_page_id = f"{source}"
+
+        # If the page ID is the same as the last one, increment the index.
+        if current_page_id == last_page_id:
+            current_chunk_index += 1
+        else:
+            current_chunk_index = 0
+            # print all the metadata, just for the first time
+            print(chunk.metadata)
+
+        # Calculate the chunk ID.
+        chunk_id = f"{current_page_id}:{current_chunk_index}"
+        last_page_id = current_page_id
+
+        # Add it to the page meta-data.
+        chunk.metadata["id"] = chunk_id
+        chunk.metadata["last_commit_date"] = last_commit_date
+        
+    return chunks
+
 def split_documents(chunk_size, documents: list[Document]):
     print(f"Splitting {len(documents)} documents into chunks of {chunk_size} characters")
     # for doc in documents:
@@ -95,16 +129,3 @@ def delete_repo(temp_repo_path):
         print(f"Cleaning up existing directory: {temp_repo_path}")
         shutil.rmtree(temp_repo_path)
 
-#TEMPORARY
-if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) < 2:
-        print("Usage: python documents.py <repository_url> [output_directory]")
-        sys.exit(1)
-        
-    repo_url = sys.argv[1]
-    subdir = sys.argv[2] if len(sys.argv) > 2 else None
-    output_dir = sys.argv[3] if len(sys.argv) > 3 else "docs"
-    
-    #download_md_files(repo_url, subdir, output_dir)

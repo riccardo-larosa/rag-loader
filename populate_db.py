@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
 from langchain_mongodb import MongoDBAtlasVectorSearch
-from documents import load_md_files, split_documents, clone_repo, delete_repo
+from documents import load_md_files, split_documents, clone_repo, delete_repo, calculate_chunk_ids
 
 # Global variable declarations
 OPENAI_API_KEY = None
@@ -13,42 +13,11 @@ MONGODB_ATLAS_CLUSTER_URI = None
 DB_NAME = None
 COLLECTION_NAME = None
 
-def calculate_chunk_ids(chunks):
-
-    # This will create IDs like "docs/commerce-manager/index.mdx:2 
-    # Page Source : Chunk Index and add the updated_date_time to the metadata
-
-    last_page_id = None
-    current_chunk_index = 0
-
-    for chunk in chunks:
-        
-        # print(chunk.page_content)
-        
-        source = chunk.metadata.get("source")
-        last_commit_date = chunk.metadata.get("last_commit_date") 
-        current_page_id = f"{source}"
-
-        # If the page ID is the same as the last one, increment the index.
-        if current_page_id == last_page_id:
-            current_chunk_index += 1
-        else:
-            current_chunk_index = 0
-            # print all the metadata, just for the first time
-            print(chunk.metadata)
-
-        # Calculate the chunk ID.
-        chunk_id = f"{current_page_id}:{current_chunk_index}"
-        last_page_id = current_page_id
-
-        # Add it to the page meta-data.
-        chunk.metadata["id"] = chunk_id
-        chunk.metadata["last_commit_date"] = last_commit_date
-        
-
-
-    return chunks
-
+"""
+This function takes a list of documents with IDs and adds them to a vector database
+IF the document has a newer last_commit_date than the one in the DB, it will update the document.
+Otherwise, it will skip the document.
+"""
 def add_to_vectorDB(chunks_with_ids: list[Document]):
     atlas_collection, db = connectToMongo()
     
@@ -158,22 +127,9 @@ def main():
     print(f"COLLECTION_NAME: {COLLECTION_NAME}")
     
     parser = argparse.ArgumentParser(description="Load MD files from Elastic Path Docs site in a MongoDB Atlas Cluster")
-    #parser.add_argument("--data_path", type=str, help="The path to the data directory.")
-    parser.add_argument("--reset", type=bool, help="Reset the database")
     parser.add_argument("--chunk_size", type=int, help="The size of the chunks")
     args = parser.parse_args()
     
-
-    
-    if args.reset:
-        print("Resetting the database: not implemented yet")
-        db = connectToMongo()
-        if db:
-            print("Connected to MongoDB Atlas")
-        else:
-            print("Failed to connect to MongoDB Atlas")
-            return
-        
     temp_repo_path = os.path.expanduser("~/temp_repo")
     git_repo_url = ""
     directory_to_load = ""
