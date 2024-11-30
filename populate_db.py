@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
 from langchain_mongodb import MongoDBAtlasVectorSearch
-from documents import load_md_files, split_documents, clone_repo, delete_repo, calculate_chunk_ids
+from utils.documents import load_md_files, split_documents, clone_repo, delete_repo, calculate_chunk_ids
 
 # Global variable declarations
 OPENAI_API_KEY = None
@@ -155,10 +155,10 @@ def main():
     #directory_to_load = "website/versioned_docs"
     
     print(f"Processing MD files from {git_repo_url} repo for {directory_to_load} directory")    
-    cloned = clone_repo(git_repo_url, temp_repo_path)
-    if not cloned:
-        print("Failed to clone the repository")
-        return
+    # cloned = clone_repo(git_repo_url, temp_repo_path)
+    # if not cloned:
+    #     print("Failed to clone the repository")
+    #     return
     
     documents = load_md_files(temp_repo_path, directory_to_load)
     chunks = split_documents(args.chunk_size, documents)
