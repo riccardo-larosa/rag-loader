@@ -4,11 +4,23 @@ from langchain_community.document_loaders import TextLoader, UnstructuredMarkdow
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import git
-import shutil
-from git import RemoteProgress
-import time
+
 
 def load_md_files(temp_repo_path, directory_to_load):
+    """
+    This function loads Markdown files from a specified directory within a temporary repository path.
+    
+    :param temp_repo_path: The `temp_repo_path` parameter is the path to the temporary repository where
+    the markdown files will be loaded
+    :param directory_to_load: The `load_md_files` function is used to load Markdown files from a
+    specific directory within a temporary repository path. The `temp_repo_path` parameter specifies the
+    path to the temporary repository, and the `directory_to_load` parameter specifies the directory
+    within the repository from which Markdown files should be loaded
+    
+    :return: A list of Document objects, each representing a loaded Markdown file. 
+    The Document objects also include the last commit date and source path for each file
+    
+    """
     # Find all .md and .mdx files in the directory and subdirectories
     directory =os.path.join(temp_repo_path, directory_to_load)
     #directory = os.path.expanduser(directory)  # Expand ~ to full home directory path
@@ -50,38 +62,17 @@ def load_md_files(temp_repo_path, directory_to_load):
         
     return documents
 
-def clone_repo(git_repo_url, temp_repo_path="~/temp_repo"):
-    
-    class Progress(RemoteProgress):
-        def update(self, op_code, cur_count, max_count=None, message=''):
-            print(f'\rProgress: {cur_count}/{max_count} {message}', end='')
-    
-    try:
-        temp_repo_path = os.path.expanduser(temp_repo_path)
-        # Clean up directory if it exists
-        if os.path.exists(temp_repo_path):
-            print(f"Cleaning up existing directory: {temp_repo_path}")
-            shutil.rmtree(temp_repo_path)
-        print(f"Cloning {git_repo_url} into {temp_repo_path}")
-        git.Repo.clone_from(
-            git_repo_url, 
-            temp_repo_path,
-            progress=Progress(),
-            depth=None  
-        )
 
-        print(f"\n✅ Repository cloned successfully in {temp_repo_path}")
-        
-    except Exception as e:
-        print(f"❌ Clone failed: {e}")
-        return False
-
-    return True
 
 def calculate_chunk_ids(chunks):
-
-    # This will create IDs like "docs/commerce-manager/index.mdx:2 
-    # Page Source : Chunk Index and add the updated_date_time to the metadata
+    """
+    This function calculates and adds the IDs for the given list of chunks.
+    The IDs are used to identify the chunks in the vector database.
+    This will create IDs like "docs/commerce-manager/index.mdx:2 
+    
+    :param chunks: A list of chunk sizes or lengths
+    :return: A list of chunk IDs
+    """
 
     last_page_id = None
     current_chunk_index = 0
@@ -91,7 +82,7 @@ def calculate_chunk_ids(chunks):
         # print(chunk.page_content)
         
         source = chunk.metadata.get("source")
-        last_commit_date = chunk.metadata.get("last_commit_date") 
+        # last_commit_date = chunk.metadata.get("last_commit_date") 
         current_page_id = f"{source}"
 
         # If the page ID is the same as the last one, increment the index.
@@ -108,7 +99,7 @@ def calculate_chunk_ids(chunks):
 
         # Add it to the page meta-data.
         chunk.metadata["id"] = chunk_id
-        chunk.metadata["last_commit_date"] = last_commit_date
+        # chunk.metadata["last_commit_date"] = last_commit_date
         
     return chunks
 
@@ -123,9 +114,3 @@ def split_documents(chunk_size, documents: list[Document]):
         is_separator_regex=False,
     )
     return text_splitter.split_documents(documents)
-
-def delete_repo(temp_repo_path):
-    if os.path.exists(temp_repo_path):
-        print(f"Cleaning up existing directory: {temp_repo_path}")
-        shutil.rmtree(temp_repo_path)
-

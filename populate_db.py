@@ -5,7 +5,8 @@ from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
 from langchain_mongodb import MongoDBAtlasVectorSearch
-from utils.documents import load_md_files, split_documents, clone_repo, delete_repo, calculate_chunk_ids
+from utils.documents import load_md_files, split_documents, calculate_chunk_ids
+# from utils.git import clone_repo, delete_repo
 
 # Global variable declarations
 OPENAI_API_KEY = None
@@ -21,16 +22,40 @@ Otherwise, it will skip the document.
 def add_to_vectorDB(chunks_with_ids: list[Document]):
     atlas_collection, db = connectToMongo()
     
-    # Add or Update the documents.
+    existing_items_dict = get_existing_items(atlas_collection)  
+    
+    to_delete_chunks, new_chunks = compare_records(chunks_with_ids, existing_items_dict)
+    
+    # Handle deletions if any
+    if len(to_delete_chunks):
+        print(f"🗑️ Deleting outdated documents: {len(to_delete_chunks)}")
+        print(f"to_delete_chunks: {to_delete_chunks}")
+        atlas_collection.delete_many({"id": {"$in": to_delete_chunks}})
+    
+    # Handle additions if any
+    if len(new_chunks):
+        print(f"👉 Adding new/updated documents: {len(new_chunks)}")
+        new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
+        #print(f"new_chunk_ids: {new_chunk_ids}")
+        db.add_documents(new_chunks, ids=new_chunk_ids)
+        #print(f"chunks added: {new_chunks}")
+    else:
+        print("✅ No new documents to add")
+        
+    return
+
+def get_existing_items(atlas_collection):
+        # Get id, last_commit_date, and source for all existing documents
     existing_items = atlas_collection.find({}, {"_id": 0, "id": 1, "last_commit_date": 1, "source": 1})
     existing_items = list(existing_items)
     
     # Create dictionaries for existing items
     existing_items_dict = {item["id"]: {"last_commit_date": item["last_commit_date"], "source": item["source"]} 
                             for item in existing_items}
-    # existing_ids = set(existing_items_dict.keys())
-    
-    # Track new/updated chunks and chunks to delete
+    return existing_items_dict
+
+def compare_records(chunks_with_ids: list[Document], existing_items_dict: dict):
+        # Track new/updated chunks and chunks to delete
     new_chunks = []
     to_delete_chunks = []
     
@@ -76,22 +101,8 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
             # Completely new source
             new_chunks.append(chunk)
     
-    # Handle deletions if any
-    if len(to_delete_chunks):
-        print(f"🗑️ Deleting outdated documents: {len(to_delete_chunks)}")
-        print(f"to_delete_chunks: {to_delete_chunks}")
-        atlas_collection.delete_many({"id": {"$in": to_delete_chunks}})
+    return to_delete_chunks, new_chunks
     
-    # Handle additions if any
-    if len(new_chunks):
-        print(f"👉 Adding new/updated documents: {len(new_chunks)}")
-        new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
-        #print(f"new_chunk_ids: {new_chunk_ids}")
-        db.add_documents(new_chunks, ids=new_chunk_ids)
-        #print(f"chunks added: {new_chunks}")
-    else:
-        print("✅ No new documents to add")
-
 def connectToMongo():
     
     print("🔗 Connecting to MongoDB Atlas")
