@@ -29,8 +29,10 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
     # Handle deletions if any
     if len(to_delete_chunks):
         print(f"🗑️ Deleting outdated documents: {len(to_delete_chunks)}")
-        print(f"to_delete_chunks: {to_delete_chunks}")
+        # print(f"to_delete_chunks: {to_delete_chunks}")
         atlas_collection.delete_many({"id": {"$in": to_delete_chunks}})
+    else:
+        print("✅ No documents to delete")
     
     # Handle additions if any
     if len(new_chunks):
@@ -45,7 +47,9 @@ def add_to_vectorDB(chunks_with_ids: list[Document]):
     return
 
 def get_existing_items(atlas_collection):
-        # Get id, last_commit_date, and source for all existing documents
+    """
+    Get id, last_commit_date, and source for all existing documents
+    """
     existing_items = atlas_collection.find({}, {"_id": 0, "id": 1, "last_commit_date": 1, "source": 1})
     existing_items = list(existing_items)
     
@@ -55,7 +59,9 @@ def get_existing_items(atlas_collection):
     return existing_items_dict
 
 def compare_records(chunks_with_ids: list[Document], existing_items_dict: dict):
-        # Track new/updated chunks and chunks to delete
+    """
+    Track new/updated documents (chunks) and documents to delete
+    """
     new_chunks = []
     to_delete_chunks = []
     
@@ -79,8 +85,6 @@ def compare_records(chunks_with_ids: list[Document], existing_items_dict: dict):
         
         if chunk_source in source_to_existing:
             # Source exists - check dates
-            #print(f"chunk_source: {chunk_source}")
-            
             # Get the last commit date from the first item in the array
             # (assuming all items for the same source have the same date)
             existing_date = source_to_existing[chunk_source][0]["last_commit_date"]
@@ -90,12 +94,7 @@ def compare_records(chunks_with_ids: list[Document], existing_items_dict: dict):
                 # Add to new chunks and mark existing ones for deletion
                 new_chunks.append(chunk)
                 print(f"to_delete_chunks: {chunk.metadata['id']}")
-                #to_delete_chunks.extend(item["id"] for item in source_to_existing[chunk_source])
                 to_delete_chunks.append(chunk.metadata["id"])
-            else:
-                #print(f"SKIPPING: md file {chunk_source} date: {chunk_date} is earlier than or equal to {existing_date}")
-                # Skip this chunk as there's a newer version in the DB
-                continue
             
         else:
             # Completely new source
@@ -141,18 +140,18 @@ def main():
     parser.add_argument("--chunk_size", type=int, help="The size of the chunks")
     args = parser.parse_args()
     
-    temp_repo_path = os.path.expanduser("~/temp_repo")
+    temp_repo_path = os.path.expanduser("~/tmp_ep_dev")
     git_repo_url = ""
     directory_to_load = ""
     ##### Commerce Cloud #####
     # Learn
-    git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/playground/learn.git"
-    directory_to_load = "docs/getting-started-with-pxm"
+    #git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/playground/learn.git"
+    #directory_to_load = "docs/getting-started-with-pxm"
     # Commerce Manager -- Note: remove docs/commerce-manager/promotions-standard 
-    #git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
+    git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
     #directory_to_load = "docs/commerce-manager"
     # Composer
-    # directory_to_load = "docs/composer"
+    directory_to_load = "docs/composer"
     # Developer Tools
     #directory_to_load = "docs/developer-tools"
     # Payments

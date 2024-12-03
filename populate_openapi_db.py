@@ -6,6 +6,7 @@ from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from utils.openapis import load_yaml_files
+from langchain.schema import Document
 
 # Global variable declarations
 OPENAI_API_KEY = None
@@ -13,11 +14,53 @@ MONGODB_ATLAS_CLUSTER_URI = None
 DB_NAME = None
 COLLECTION_NAME_OPENAPI = None
 
-def add_to_vectorDB(api_specs: dict):
+def add_to_vectorDB(documents: list[Document]):
     atlas_collection, db = connectToMongo()
-    for spec in api_specs:
-        db.add_documents(spec)
+    existing_items_dict = get_existing_items(atlas_collection)
     
+    to_delete_chunks, new_chunks = compare_records(documents, existing_items_dict)
+    if len(to_delete_chunks):
+        print(f"🗑️ Deleting outdated documents: {len(to_delete_chunks)}")
+        atlas_collection.delete_many({"id": {"$in": to_delete_chunks}})
+    else:
+        print("✅ No documents to delete")
+        
+    if len(new_chunks):
+        print(f"👉 Adding new/updated documents: {len(new_chunks)}")
+        db.add_documents(new_chunks)
+    else:
+        print("✅ No new documents to add")
+    
+    return
+
+def compare_records(documents: list[Document], existing_items_dict: dict):
+    to_delete_chunks = []
+    new_chunks = []
+    # TODO: Implement logic to compare records
+    print("🔄 Comparing records")
+    #check doc.metadata["id"] in existing_items_dict
+    for doc in documents:
+        if doc.metadata["id"] in existing_items_dict:
+            print(f"document {doc.metadata['id']} already exists")
+            # check if last_commit_date is more recent
+            if doc.metadata["last_commit_date"] > existing_items_dict[doc.metadata["id"]]["last_commit_date"]:
+                print(f"document {doc.metadata['id']} is more recent")
+                new_chunks.append(doc)
+                to_delete_chunks.append(doc.metadata["id"])
+            else:
+                print(f"document {doc.metadata['id']} does not need to be updated")
+        else:
+            # Completely new document
+            #print(f"document {doc.metadata['id']} is new")
+            new_chunks.append(doc)
+    return to_delete_chunks, new_chunks
+
+def get_existing_items(atlas_collection):
+    existing_items = atlas_collection.find({}, {"_id": 0, "id": 1, "last_commit_date": 1, "source": 1})
+    existing_items = list(existing_items)
+    existing_items_dict = {item["id"]: {"last_commit_date": item["last_commit_date"], "source": item["source"]} 
+                            for item in existing_items}
+    return existing_items_dict
 
 def connectToMongo():
     embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, model="text-embedding-3-small") 

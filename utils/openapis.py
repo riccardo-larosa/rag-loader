@@ -2,32 +2,82 @@ import os
 import glob
 import yaml
 from utils.reduce_openapi_spec import reduce_openapi_spec
+from langchain_core.documents import Document
+import git
+import tiktoken
+
 
 def load_yaml_files(directory):
+    """
+    This function loads YAML files from a specified directory.
+    
+    :param directory: The `directory` parameter in the `load_yaml_files` function is a string that
+    represents the path to a directory where YAML files are located
+    
+    :return: A dictionary of ReducedOpenAPISpec objects, each representing a loaded YAML file.
+    """
     try:
         yaml_files = glob.glob(os.path.join(directory, '**', '*.yaml'), recursive=True) 
         print(f"Found {len(yaml_files)} YAML files in {directory}")
-        reduced_specs = {}
+        
+        # initialize the git repo
+        repo = git.Repo(directory, search_parent_directories=True)
+        repo_root = repo.working_tree_dir  # Get the root directory of the repo
+        
+        # I want to return a list of documents
+        reduced_specs = []
         for file_path in yaml_files:
-            print(file_path)
-            #file_size = os.path.getsize(file_path)
-            #print(f"Size: {file_size} bytes")
+            if repo:
+                relative_path = os.path.relpath(file_path, repo_root)
+                last_commit_date = repo.git.log('-1', '--format=%cI', '--', relative_path)
+            else:
+                print(f"No git repository found for {file_path}")
+                break
+            parent_folder = os.path.basename(os.path.dirname(file_path))
+            
             with open(file_path, 'r') as f:
                 raw_spec = yaml.safe_load(f)
-            reduced_spec = reduce_openapi_spec(raw_spec, dereference=True)
-            # reduced_spec_str = yaml.dump(reduced_spec)
-            # print(f"Reduced spec size: {len(reduced_spec_str)} bytes")
+                
+            reduced_spec = reduce_openapi_spec(raw_spec,last_commit_date, relative_path, dereference=True)
+            print("--------------------------------")
+            print(f"adding specs for {parent_folder}")
+            print(f"first: {reduced_spec.title}")
+            #first create a document with the title and description
+            doc = Document(page_content=reduced_spec.title + "\n" + str(reduced_spec.description))
+            doc.metadata["id"] = parent_folder
+            doc.metadata["source"] = relative_path
+            doc.metadata["last_commit_date"] = last_commit_date
+            reduced_specs.append(doc)
+            
             # print("--------------------------------")
-            print(f"title: {reduced_spec.title}")
-            # print(f"description: {len(reduced_spec.description) if reduced_spec.description else 0} characters\n")
-            #print(f"servers: {reduced_spec.servers}\n")
+            # print(f"title: {reduced_spec.title}")
+            # print(f"description: {len(reduced_spec.description) if reduced_spec.description else 0} characters \
+            #     and {count_tokens(reduced_spec.description) if reduced_spec.description else 0} tokens")
+            # print(f"servers: {reduced_spec.servers}\n")
             for endpoint in reduced_spec.endpoints:
-                print(f"endpoint: {endpoint[0]}")
-            #     print(f"description: {len(endpoint[1]) if endpoint[1] else 0} characters")
-            #     print(f"docs: {len(str(endpoint[2])) if endpoint[2] else 0} characters\n")
-            reduced_specs[reduced_spec.title] = reduced_spec
+                # print(f"""endpoint: {endpoint[0]} \
+                #     description: {len(endpoint[1]) if endpoint[1] else 0} characters \
+                #     docs: {len(str(endpoint[2])) if endpoint[2] else 0} characters """)
+                # if endpoint[0] == "GET /v2/carts/{cartID}":
+                #     print(f"description: {endpoint[1]}")
+                #     print(f"docs: {endpoint[2]}")
+                # create a document for each endpoint
+                doc = Document(page_content= endpoint[0] + " " + str(endpoint[2]))
+                doc.metadata["id"] = endpoint[0]
+                doc.metadata["source"] = relative_path
+                doc.metadata["last_commit_date"] = last_commit_date
+                reduced_specs.append(doc)
+                # print(f"added {endpoint[0]}")
         return reduced_specs
+    
     except Exception as e:
         print(f"Error searching for YAML files in {directory}: {str(e)}")
-        return []
+        return None
+    
+
+    
+def count_tokens(text):
+    encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+    tokens = encoding.encode(text)
+    return len(tokens)
 

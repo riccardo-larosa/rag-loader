@@ -19,6 +19,7 @@ def load_md_files(temp_repo_path, directory_to_load):
     
     :return: A list of Document objects, each representing a loaded Markdown file. 
     The Document objects also include the last commit date and source path for each file
+    in the metadata
     
     """
     # Find all .md and .mdx files in the directory and subdirectories
@@ -71,7 +72,7 @@ def calculate_chunk_ids(chunks):
     This will create IDs like "docs/commerce-manager/index.mdx:2 
     
     :param chunks: A list of chunk sizes or lengths
-    :return: A list of chunk IDs
+    :return: the same list of chunks with the IDs added
     """
 
     last_page_id = None

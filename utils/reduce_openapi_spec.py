@@ -25,9 +25,11 @@ class ReducedOpenAPISpec:
     title: str
     description: str
     endpoints: List[Tuple[str, str, dict]]
+    last_commit_date: str
+    source: str
 
 
-def reduce_openapi_spec(spec: dict, dereference: bool = True) -> ReducedOpenAPISpec:
+def reduce_openapi_spec(spec: dict, last_commit_date: str, source: str, dereference: bool = True) -> ReducedOpenAPISpec:
     """Simplify/distill/minify a spec somehow.
 
     I want a smaller target for retrieval and (more importantly)
@@ -63,7 +65,7 @@ def reduce_openapi_spec(spec: dict, dereference: bool = True) -> ReducedOpenAPIS
         
         out = {}
         if docs.get("description"):
-            out["description"] = docs.get("description")
+            out["description"] = docs.get("summary") + " - " + docs.get("description")
         if docs.get("parameters"):
             out["parameters"] = [
                 parameter
@@ -94,4 +96,6 @@ def reduce_openapi_spec(spec: dict, dereference: bool = True) -> ReducedOpenAPIS
         title=spec["info"].get("title", ""),
         description=spec["info"].get("description", ""),
         endpoints=endpoints,
+        last_commit_date=last_commit_date,
+        source=source
     )
