@@ -142,38 +142,30 @@ def main():
     
     temp_repo_path = os.path.expanduser("~/tmp_ep_dev")
     git_repo_url = ""
-    directory_to_load = ""
     ##### Commerce Cloud #####
-    # Learn
-    #git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/playground/learn.git"
-    #directory_to_load = "docs/getting-started-with-pxm"
-    # Commerce Manager -- Note: remove docs/commerce-manager/promotions-standard 
     git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
-    #directory_to_load = "docs/commerce-manager"
-    # Composer
-    directory_to_load = "docs/composer"
-    # Developer Tools
-    #directory_to_load = "docs/developer-tools"
-    # Payments
-    #directory_to_load = "docs/payments"
-    # Guides
-    #directory_to_load = "guides"
-    
+    directories_to_load = ["docs/commerce-manager", 
+                           "docs/composer", 
+                           "docs/developer-tools", 
+                           "docs/payments", 
+                           "guides"]
     
     ##### EPSM #####
     #git_repo_url = "git@gitlab.elasticpath.com:commerce/docs-commerce.git"
     #directory_to_load = "website/versioned_docs"
     
-    print(f"Processing MD files from {git_repo_url} repo for {directory_to_load} directory")    
+    
     # cloned = clone_repo(git_repo_url, temp_repo_path)
     # if not cloned:
     #     print("Failed to clone the repository")
     #     return
     
-    documents = load_md_files(temp_repo_path, directory_to_load)
-    chunks = split_documents(args.chunk_size, documents)
-    chunks_with_ids = calculate_chunk_ids(chunks)
-    add_to_vectorDB(chunks_with_ids)
+    for directory in directories_to_load:
+        print(f"Processing MD files from {git_repo_url} repo for {directory} directory")
+        documents = load_md_files(temp_repo_path, directory)
+        chunks = split_documents(args.chunk_size, documents)
+        chunks_with_ids = calculate_chunk_ids(chunks)
+        add_to_vectorDB(chunks_with_ids)
     #cleanup
     #delete_repo(temp_repo_path)
 

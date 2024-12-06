@@ -36,19 +36,19 @@ def add_to_vectorDB(documents: list[Document]):
 def compare_records(documents: list[Document], existing_items_dict: dict):
     to_delete_chunks = []
     new_chunks = []
-    # TODO: Implement logic to compare records
+    
     print("🔄 Comparing records")
     #check doc.metadata["id"] in existing_items_dict
     for doc in documents:
         if doc.metadata["id"] in existing_items_dict:
-            print(f"document {doc.metadata['id']} already exists")
+            #print(f"document {doc.metadata['id']} already exists")
             # check if last_commit_date is more recent
             if doc.metadata["last_commit_date"] > existing_items_dict[doc.metadata["id"]]["last_commit_date"]:
-                print(f"document {doc.metadata['id']} is more recent")
+                #print(f"document {doc.metadata['id']} is more recent")
                 new_chunks.append(doc)
                 to_delete_chunks.append(doc.metadata["id"])
-            else:
-                print(f"document {doc.metadata['id']} does not need to be updated")
+            #else:
+                #print(f"document {doc.metadata['id']} does not need to be updated")
         else:
             # Completely new document
             #print(f"document {doc.metadata['id']} is new")

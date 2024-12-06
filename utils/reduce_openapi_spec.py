@@ -46,7 +46,7 @@ def reduce_openapi_spec(spec: dict, last_commit_date: str, source: str, derefere
     """
     # 1. Consider only get, post, patch, put, delete endpoints.
     endpoints = [
-        (f"{operation_name.upper()} {route}", docs.get("description"), docs)
+        (f"{operation_name.upper()} {route}", docs.get("description"), docs.get("operationId"), docs)
         for route, operation in spec["paths"].items()
         for operation_name, docs in operation.items()
         if operation_name in ["get", "post", "patch", "put", "delete"]
@@ -56,8 +56,8 @@ def reduce_openapi_spec(spec: dict, last_commit_date: str, source: str, derefere
     # Note: probably want to do this post-retrieval, it blows up the size of the spec.
     if dereference:
         endpoints = [
-            (name, description, dereference_refs(docs, full_schema=spec, skip_keys=["responses","examples"]))
-            for name, description, docs in endpoints
+            (name, description, operationId, dereference_refs(docs, full_schema=spec, skip_keys=["responses","examples"]))
+            for name, description, operationId, docs in endpoints
         ]
 
     # 3. Strip docs down to required request args + happy path response.
@@ -88,8 +88,8 @@ def reduce_openapi_spec(spec: dict, last_commit_date: str, source: str, derefere
         return out
     
     endpoints = [
-        (name, description, reduce_endpoint_docs(docs))
-        for name, description, docs in endpoints
+        (name, description, operationId, reduce_endpoint_docs(docs))
+        for name, description, operationId, docs in endpoints
     ]
     return ReducedOpenAPISpec(
         servers=spec["servers"],
