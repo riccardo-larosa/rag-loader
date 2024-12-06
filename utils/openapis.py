@@ -9,16 +9,21 @@ import tiktoken
 import re
 
 def kebab_case_lodash_like(input_string):
-    # Replace `/` with space, then split words, numbers, and special cases
-    parts = re.sub(r'/', ' ', input_string)  # Replace `/` with space
-    parts = re.sub(r'([a-z])([A-Z])', r'\1 \2', parts)  # Split camel case
-    parts = re.sub(r'(\d+)([a-zA-Z])', r'\1 \2', parts)  # Split digits from letters
-    parts = re.sub(r'([a-zA-Z])(\d+)', r'\1 \2', parts)  # Split letters from digits
+    # Step 1: Replace `/` and other separators with a space
+    parts = re.sub(r'[\/_]', ' ', input_string)
     
-    # Replace multiple spaces with single space
-    parts = re.sub(r'\s+', ' ', parts)
+    # Step 2: Handle camel case by splitting uppercase letters followed by lowercase letters
+    parts = re.sub(r'([a-z])([A-Z])', r'\1 \2', parts)
+    parts = re.sub(r'([A-Z])([A-Z][a-z])', r'\1 \2', parts)  # Split consecutive uppercase words properly
+
+    # Step 3: Handle digits and letters separation
+    parts = re.sub(r'(\d+)([a-zA-Z])', r'\1 \2', parts)
+    parts = re.sub(r'([a-zA-Z])(\d+)', r'\1 \2', parts)
     
-    # Convert to lowercase and join with '-'
+    # Step 4: Normalize spaces (collapse multiple spaces into one)
+    parts = re.sub(r'\s+', ' ', parts.strip())
+    
+    # Step 5: Convert to lowercase and join with '-'
     return '-'.join(parts.lower().split())
 
 def load_yaml_files(directory):
