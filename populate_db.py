@@ -137,22 +137,24 @@ def main():
     print(f"COLLECTION_NAME: {COLLECTION_NAME}")
     
     parser = argparse.ArgumentParser(description="Load MD files from Elastic Path Docs site in a MongoDB Atlas Cluster")
-    parser.add_argument("--chunk_size", type=int, help="The size of the chunks")
+    parser.add_argument("--repo_location", type=str, required=True, help="The location of the repo to load")
+    parser.add_argument("--chunk_size", type=int, default=3000, help="The size of the chunks")
     args = parser.parse_args()
     
-    temp_repo_path = os.path.expanduser("~/tmp_ep_dev")
+    temp_repo_path = os.path.expanduser(args.repo_location)
     git_repo_url = ""
     ##### Commerce Cloud #####
-    git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
+    #git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
     directories_to_load = ["docs/commerce-manager", 
                            "docs/composer", 
                            "docs/developer-tools", 
                            "docs/payments", 
+                           "docs/partials",
                            "guides"]
     
     ##### EPSM #####
     #git_repo_url = "git@gitlab.elasticpath.com:commerce/docs-commerce.git"
-    #directory_to_load = "website/versioned_docs"
+    #directory_to_load = ["website/versioned_docs"]
     
     
     # cloned = clone_repo(git_repo_url, temp_repo_path)

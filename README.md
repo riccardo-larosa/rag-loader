@@ -15,23 +15,41 @@ python -m pip install -r requirements.txt
 
 deactivate
 ```
-
-* Load VectorDB using the markdown files in the data directory
+* Clone the repo you want to load into your local machine
 ```bash
-usage: populate_database.py [-h] [--chunk_size CHUNK_SIZE]
+git clone git@<url>:<repo>.git
+```
+
+* Load VectorDB using the markdown files that you want to load (for openapi specs see below)
+```bash
+usage: populate_database.py [-h] [--repo_location REPO_LOCATION] [--chunk_size CHUNK_SIZE]
 
 optional arguments:
   -h, --help                show this help message and exit
-  --chunk_size CHUNK_SIZE   Size of the Chunks
+  --repo_location REPO_LOCATION   The location on your local machine of the repo where the files are located
+  --chunk_size CHUNK_SIZE   Size of the Chunks (default to 3000)
 ```
-Use the flag ```--reset``` to clear the database
 
 Example:
 
 ```bash
-python populate_db.py --chunk_size 2000 
+python populate_db.py --repo_location ~/tmp_ep_dev --chunk_size 3000 
 ```
-- 
+
+* Load OpenAPI specs files from a directory
+```bash
+usage: populate_openapi_db.py [-h] [--openapi_dir_location OPENAPI_DIR_LOCATION]
+
+optional arguments:
+  -h, --help                show this help message and exit
+  --openapi_dir_location OPENAPI_DIR_LOCATION   The location on your local machine of the repo where the files are located
+```
+
+Example:
+
+```bash
+python populate_openapi_db.py --openapi_dir_location ~/tmp_ep_dev/openapispecs
+```
 
 ## Notes
 - The chunk size is the size of the chunks to split the markdown files into.
@@ -52,6 +70,7 @@ python populate_db.py --chunk_size 2000
   ]
 }
 ```
+
 
 ## Credit
 A lot of this code comes from https://www.youtube.com/watch?v=2TJxpyO3ei4 

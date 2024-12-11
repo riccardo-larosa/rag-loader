@@ -1,6 +1,7 @@
 # from utils.yaml_loader import YamlLoader
 import yaml
 import os
+import argparse
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from pymongo import MongoClient
@@ -90,12 +91,15 @@ def main():
     print(f"DB_NAME: {DB_NAME}")
     print(f"COLLECTION_NAME_OPENAPI: {COLLECTION_NAME_OPENAPI}")
     
+    parser = argparse.ArgumentParser(description="Load OpenAPI specs from Elastic Path Docs site in a MongoDB Atlas Cluster")
+    parser.add_argument("--openapi_dir_location", type=str, required=True, help="The location of the OpenAPI specs to load")
+    args = parser.parse_args()
     
-    repo_path = os.path.expanduser("~/tmp_ep_dev/openapispecs")
+    repo_path = os.path.expanduser(args.openapi_dir_location)
     api_specs = load_yaml_files(repo_path)
     add_to_vectorDB(api_specs)
     
-    # print(api_specs)
+
 
 if __name__ == "__main__":
     main()
