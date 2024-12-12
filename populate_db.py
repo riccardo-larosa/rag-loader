@@ -144,23 +144,26 @@ def main():
     temp_repo_path = os.path.expanduser(args.repo_location)
     git_repo_url = ""
     ##### Commerce Cloud #####
-    #git_repo_url = "git@gitlab.elasticpath.com:commerce-cloud/elasticpath-dev.git"
-    directories_to_load = ["docs/commerce-manager", 
-                           "docs/composer", 
-                           "docs/developer-tools", 
-                           "docs/payments", 
-                           "docs/partials",
-                           "guides"]
+    #git_repo_url = "git@<url>.git"
+    # directories_to_load = ["docs/commerce-manager", 
+    #                        "docs/composer", 
+    #                        "docs/developer-tools", 
+    #                        "docs/payments", 
+    #                        "docs/partials",
+    #                        "guides"]
     
     ##### EPSM #####
-    #git_repo_url = "git@gitlab.elasticpath.com:commerce/docs-commerce.git"
-    #directory_to_load = ["website/versioned_docs"]
-    
-    
-    # cloned = clone_repo(git_repo_url, temp_repo_path)
-    # if not cloned:
-    #     print("Failed to clone the repository")
-    #     return
+    #git_repo_url = "git@<url>.git"
+    directories_to_load = ["website/versioned_docs/version-7.5.x",
+                           "website/versioned_docs/version-7.6.x",
+                           "website/versioned_docs/version-8.0.x",
+                           "website/versioned_docs/version-8.1.x",
+                           "website/versioned_docs/version-8.2.x",
+                           "website/versioned_docs/version-8.3.x",
+                           "website/versioned_docs/version-8.4.x",
+                           "website/versioned_docs/version-8.5.x",
+                           "website/versioned_docs/version-8.6.x",
+                           ]
     
     for directory in directories_to_load:
         print(f"Processing MD files from {git_repo_url} repo for {directory} directory")
@@ -168,8 +171,8 @@ def main():
         chunks = split_documents(args.chunk_size, documents)
         chunks_with_ids = calculate_chunk_ids(chunks)
         add_to_vectorDB(chunks_with_ids)
-    #cleanup
-    #delete_repo(temp_repo_path)
+    
+
 
 if __name__ == "__main__":
     main()
