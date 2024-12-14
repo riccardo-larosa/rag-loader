@@ -12,6 +12,7 @@ from utils.documents import load_md_files, split_documents, calculate_chunk_ids
 OPENAI_API_KEY = None
 MONGODB_ATLAS_CLUSTER_URI = None
 DB_NAME = None
+DOC_SITE = None
 COLLECTION_NAME = None
 
 """
@@ -126,47 +127,77 @@ def connectToMongo():
         
 
 def main():
-    global OPENAI_API_KEY, MONGODB_ATLAS_CLUSTER_URI, DB_NAME, COLLECTION_NAME
+    global OPENAI_API_KEY, MONGODB_ATLAS_CLUSTER_URI, DB_NAME, DOC_SITE, COLLECTION_NAME
     
     load_dotenv(override=True)
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    MONGODB_ATLAS_CLUSTER_URI = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
-    DB_NAME = os.getenv("DB_NAME")
-    COLLECTION_NAME = os.getenv("COLLECTION_NAME")
-    print(f"DB_NAME: {DB_NAME}")
-    print(f"COLLECTION_NAME: {COLLECTION_NAME}")
     
     parser = argparse.ArgumentParser(description="Load MD files from Elastic Path Docs site in a MongoDB Atlas Cluster")
+    parser.add_argument("--doc_site", type=str, required=True, help="The name of the docs site, EPCC or EPSM")
     parser.add_argument("--repo_location", type=str, required=True, help="The location of the repo to load")
     parser.add_argument("--chunk_size", type=int, default=3000, help="The size of the chunks")
     args = parser.parse_args()
     
-    temp_repo_path = os.path.expanduser(args.repo_location)
-    git_repo_url = ""
-    ##### Commerce Cloud #####
-    #git_repo_url = "git@<url>.git"
-    # directories_to_load = ["docs/commerce-manager", 
-    #                        "docs/composer", 
-    #                        "docs/developer-tools", 
-    #                        "docs/payments", 
-    #                        "docs/partials",
-    #                        "guides"]
+    if args.doc_site == "EPCC":
+        COLLECTION_NAME = os.getenv("COLLECTION_NAME_EPCC")
+        print(f"Setting COLLECTION_NAME for EPCC: {COLLECTION_NAME}")
+        directories_to_load = ["docs/commerce-manager", 
+                               "docs/composer", 
+                               "docs/developer-tools", 
+                               "docs/payments", 
+                               "docs/partials",
+                               "guides"]
+    elif args.doc_site == "EPSM":
+        COLLECTION_NAME = os.getenv("COLLECTION_NAME_EPSM")
+        print(f"Setting COLLECTION_NAME for EPSM: {COLLECTION_NAME}")
+        directories_to_load = ["website/versioned_docs/version-7.5.x",
+                               "website/versioned_docs/version-7.6.x",
+                               "website/versioned_docs/version-8.0.x",
+                               "website/versioned_docs/version-8.1.x",
+                               "website/versioned_docs/version-8.2.x",
+                               "website/versioned_docs/version-8.3.x",
+                               "website/versioned_docs/version-8.4.x",
+                               "website/versioned_docs/version-8.5.x",
+                               "website/versioned_docs/version-8.6.x",
+                               ]
+        ##TODO: commerce-manager, composer-plugin, extension-framework  
+    else:
+        print(f"Invalid DOC_SITE: {args.doc_site}")
+        return
+
+
+    print("\nDebug: Environment variables after load_dotenv:")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    print(f"OPENAI_API_KEY exists: {OPENAI_API_KEY is not None}")
     
-    ##### EPSM #####
-    #git_repo_url = "git@<url>.git"
-    directories_to_load = ["website/versioned_docs/version-7.5.x",
-                           "website/versioned_docs/version-7.6.x",
-                           "website/versioned_docs/version-8.0.x",
-                           "website/versioned_docs/version-8.1.x",
-                           "website/versioned_docs/version-8.2.x",
-                           "website/versioned_docs/version-8.3.x",
-                           "website/versioned_docs/version-8.4.x",
-                           "website/versioned_docs/version-8.5.x",
-                           "website/versioned_docs/version-8.6.x",
-                           ]
+    MONGODB_ATLAS_CLUSTER_URI = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
+    print(f"MONGODB_ATLAS_CLUSTER_URI exists: {MONGODB_ATLAS_CLUSTER_URI is not None}")
+    
+    DB_NAME = os.getenv("DB_NAME")
+    print(f"DB_NAME exists: {DB_NAME is not None}")
+    
+    print(f"COLLECTION_NAME: {COLLECTION_NAME}")
+    print(f"COLLECTION_NAME exists: {COLLECTION_NAME is not None}")
+
+    # Add error messages to assertions for better debugging
+    assert OPENAI_API_KEY is not None, f"OPENAI_API_KEY is not set in environment: {os.getenv('OPENAI_API_KEY')}"
+    assert MONGODB_ATLAS_CLUSTER_URI is not None, f"MONGODB_ATLAS_CLUSTER_URI is not set in environment: {os.getenv('MONGODB_ATLAS_CLUSTER_URI')}"
+    assert DB_NAME is not None, f"DB_NAME is not set in environment: {os.getenv('DB_NAME')}"
+    assert COLLECTION_NAME is not None, f"COLLECTION_NAME is not set in environment. COLLECTION_NAME_EPCC: {os.getenv('COLLECTION_NAME_EPCC')}, COLLECTION_NAME_EPSM: {os.getenv('COLLECTION_NAME_EPSM')}"
+    
+    # OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    # MONGODB_ATLAS_CLUSTER_URI = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
+    # DB_NAME = os.getenv("DB_NAME")
+    # print(f"COLLECTION_NAME: {COLLECTION_NAME}")
+
+    # assert OPENAI_API_KEY is not None, "OPENAI_API_KEY is not set"  
+    # assert MONGODB_ATLAS_CLUSTER_URI is not None, "MONGODB_ATLAS_CLUSTER_URI is not set"
+    # assert DB_NAME is not None, "DB_NAME is not set"
+    # assert COLLECTION_NAME is not None, "COLLECTION_NAME is not set"
+
+    temp_repo_path = os.path.expanduser(args.repo_location)
     
     for directory in directories_to_load:
-        print(f"Processing MD files from {git_repo_url} repo for {directory} directory")
+        print(f"Processing MD files from repo for {directory} directory")
         documents = load_md_files(temp_repo_path, directory)
         chunks = split_documents(args.chunk_size, documents)
         chunks_with_ids = calculate_chunk_ids(chunks)

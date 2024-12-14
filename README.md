@@ -22,10 +22,11 @@ git clone git@<url>:<repo>.git
 
 * Load VectorDB using the markdown files that you want to load (for openapi specs see below)
 ```bash
-usage: populate_database.py [-h] [--repo_location REPO_LOCATION] [--chunk_size CHUNK_SIZE]
+usage: populate_database.py [-h] [--doc_site DOC_SITE] [--repo_location REPO_LOCATION] [--chunk_size CHUNK_SIZE]
 
 optional arguments:
   -h, --help                show this help message and exit
+  --doc_site DOC_SITE   The name of the docs site, i.e.:EPCC or EPSM
   --repo_location REPO_LOCATION   The location on your local machine of the repo where the files are located
   --chunk_size CHUNK_SIZE   Size of the Chunks (default to 3000)
 ```
@@ -33,7 +34,7 @@ optional arguments:
 Example:
 
 ```bash
-python populate_db.py --repo_location ~/tmp_ep_dev --chunk_size 3000 
+python populate_db.py --doc_site EPCC --repo_location ~/tmp_ep_dev --chunk_size 3000 
 ```
 
 * Load OpenAPI specs files from a directory
