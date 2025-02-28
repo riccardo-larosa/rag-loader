@@ -6,7 +6,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import git
 
 
-def load_md_files(temp_repo_path, directory_to_load):
+def load_md_files(temp_repo_path, directory_to_load, base_url):
     """
     This function loads Markdown files from a specified directory within a temporary repository path.
     
@@ -16,6 +16,7 @@ def load_md_files(temp_repo_path, directory_to_load):
     specific directory within a temporary repository path. The `temp_repo_path` parameter specifies the
     path to the temporary repository, and the `directory_to_load` parameter specifies the directory
     within the repository from which Markdown files should be loaded
+    :param base_url: The `base_url` parameter is the base url of the documentation site, but it's only used for EPSM
     
     :return: A list of Document objects, each representing a loaded Markdown file. 
     The Document objects also include the last commit date and source path for each file
@@ -59,6 +60,8 @@ def load_md_files(temp_repo_path, directory_to_load):
             relative_path = os.path.relpath(file_path, temp_repo_path)
             doc.metadata["source"] = relative_path
             doc.metadata["last_commit_date"] = last_commit_date
+            if base_url:
+                doc.metadata["url"] = base_url + "/" + relative_path
             documents.append(doc)
         
     return documents

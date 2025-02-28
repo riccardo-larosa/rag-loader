@@ -15,7 +15,7 @@ python -m pip install -r requirements.txt
 
 deactivate
 ```
-* Clone the repo you want to load into your local machine
+* Clone the document repo you want to load into your local machine
 ```bash
 git clone git@<url>:<repo>.git
 ```
@@ -28,6 +28,7 @@ optional arguments:
   -h, --help                show this help message and exit
   --doc_site DOC_SITE   The name of the docs site, i.e.:EPCC or EPSM
   --repo_location REPO_LOCATION   The location on your local machine of the repo where the files are located
+  --base_url BASE_URL The url of the documentation site (mostly used for EPSM)
   --chunk_size CHUNK_SIZE   Size of the Chunks (default to 3000)
 ```
 
@@ -35,6 +36,7 @@ Example:
 
 ```bash
 python populate_db.py --doc_site EPCC --repo_location ~/tmp_ep_dev --chunk_size 3000 
+python populate_db.py --doc_site EPSM --repo_location ~/tmp_smc_docs/docs-commerce --base_url https://documentation.elasticpath.com/commerce --chunk_size 3000
 ```
 
 * Load OpenAPI specs files from a directory

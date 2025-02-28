@@ -134,6 +134,7 @@ def main():
     parser = argparse.ArgumentParser(description="Load MD files from Elastic Path Docs site in a MongoDB Atlas Cluster")
     parser.add_argument("--doc_site", type=str, required=True, help="The name of the docs site, EPCC or EPSM")
     parser.add_argument("--repo_location", type=str, required=True, help="The location of the repo to load")
+    parser.add_argument("--base_url", type=str, required=False, help="The url of the documentation site")
     parser.add_argument("--chunk_size", type=int, default=3000, help="The size of the chunks")
     args = parser.parse_args()
     
@@ -149,16 +150,7 @@ def main():
     elif args.doc_site == "EPSM":
         COLLECTION_NAME = os.getenv("COLLECTION_NAME_EPSM")
         print(f"Setting COLLECTION_NAME for EPSM: {COLLECTION_NAME}")
-        directories_to_load = ["website/versioned_docs/version-7.5.x",
-                               "website/versioned_docs/version-7.6.x",
-                               "website/versioned_docs/version-8.0.x",
-                               "website/versioned_docs/version-8.1.x",
-                               "website/versioned_docs/version-8.2.x",
-                               "website/versioned_docs/version-8.3.x",
-                               "website/versioned_docs/version-8.4.x",
-                               "website/versioned_docs/version-8.5.x",
-                               "website/versioned_docs/version-8.6.x",
-                               ]
+        directories_to_load = ["website/versioned_docs/version-8.6.x"]
         ##TODO: commerce-manager, composer-plugin, extension-framework  
     else:
         print(f"Invalid DOC_SITE: {args.doc_site}")
@@ -198,7 +190,10 @@ def main():
     
     for directory in directories_to_load:
         print(f"Processing MD files from repo for {directory} directory")
-        documents = load_md_files(temp_repo_path, directory)
+        if args.doc_site == "EPSM":
+            documents = load_md_files(temp_repo_path, directory, args.base_url)
+        else:
+            documents = load_md_files(temp_repo_path, directory)
         chunks = split_documents(args.chunk_size, documents)
         chunks_with_ids = calculate_chunk_ids(chunks)
         add_to_vectorDB(chunks_with_ids)
