@@ -4,6 +4,14 @@ from langchain_community.document_loaders import TextLoader, UnstructuredMarkdow
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import git
+import re
+
+def transform_path(file_path):
+    pattern = r"^website/versioned_docs/version-\d+\.\d+\.x/(.+)\.md$"
+    replacement = r"docs/\1.html"
+    
+    new_path = re.sub(pattern, replacement, file_path)
+    return new_path
 
 
 def load_md_files(temp_repo_path, directory_to_load, base_url):
@@ -61,7 +69,7 @@ def load_md_files(temp_repo_path, directory_to_load, base_url):
             doc.metadata["source"] = relative_path
             doc.metadata["last_commit_date"] = last_commit_date
             if base_url:
-                doc.metadata["url"] = base_url + "/" + relative_path
+                doc.metadata["url"] = base_url + "/" + transform_path(relative_path)
             documents.append(doc)
         
     return documents
