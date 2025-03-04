@@ -150,8 +150,11 @@ def main():
     elif args.doc_site == "EPSM":
         COLLECTION_NAME = os.getenv("COLLECTION_NAME_EPSM")
         print(f"Setting COLLECTION_NAME for EPSM: {COLLECTION_NAME}")
-        directories_to_load = ["website/versioned_docs/version-8.6.x"]
-        ##TODO: commerce-manager, composer-plugin, extension-framework  
+        if args.repo_location.endswith("extension-framework"):
+            directories_to_load = ["website/versioned_docs/version-1.3.x"]
+        else:
+            directories_to_load = ["website/versioned_docs/version-8.6.x"]
+        
     else:
         print(f"Invalid DOC_SITE: {args.doc_site}")
         return
@@ -176,15 +179,6 @@ def main():
     assert DB_NAME is not None, f"DB_NAME is not set in environment: {os.getenv('DB_NAME')}"
     assert COLLECTION_NAME is not None, f"COLLECTION_NAME is not set in environment. COLLECTION_NAME_EPCC: {os.getenv('COLLECTION_NAME_EPCC')}, COLLECTION_NAME_EPSM: {os.getenv('COLLECTION_NAME_EPSM')}"
     
-    # OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    # MONGODB_ATLAS_CLUSTER_URI = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
-    # DB_NAME = os.getenv("DB_NAME")
-    # print(f"COLLECTION_NAME: {COLLECTION_NAME}")
-
-    # assert OPENAI_API_KEY is not None, "OPENAI_API_KEY is not set"  
-    # assert MONGODB_ATLAS_CLUSTER_URI is not None, "MONGODB_ATLAS_CLUSTER_URI is not set"
-    # assert DB_NAME is not None, "DB_NAME is not set"
-    # assert COLLECTION_NAME is not None, "COLLECTION_NAME is not set"
 
     temp_repo_path = os.path.expanduser(args.repo_location)
     
