@@ -97,7 +97,7 @@ def main():
     
     repo_path = os.path.expanduser(args.openapi_dir_location)
     api_specs = load_yaml_files(repo_path)
-    add_to_vectorDB(api_specs)
+    #add_to_vectorDB(api_specs)
     
 
 
