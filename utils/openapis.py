@@ -84,7 +84,7 @@ def load_yaml_files(directory):
                     doc.metadata["source"] = "docs/api/"+ kebab_case_lodash_like(parent_folder)+"/"+kebab_case_lodash_like(endpoint[2])
                 reduced_specs.append(doc)
                 
-                print(doc)
+                #print(doc)
         return reduced_specs
     
     except Exception as e:
