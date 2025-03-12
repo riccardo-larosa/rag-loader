@@ -75,37 +75,6 @@ def reduce_openapi_spec(
             for name, description, operationId, docs in endpoints
         ]
 
-    # 3. Strip docs down to required request args + happy path response.
-    def reduce_endpoint_docs(docs: dict) -> dict:
-
-        out = {}
-        if docs.get("description"):
-            out["description"] = docs.get("summary") + " - " + docs.get("description")
-        # parameters
-        if docs.get("parameters"):
-            out["parameters"] = [
-                parameter
-                for parameter in docs.get("parameters", [])
-                if parameter.get("required")
-            ]
-        # requestBody
-        try:
-            if docs.get("requestBody"):
-                out["requestBody"] = docs.get("requestBody")
-        except KeyError:
-            print("local" + docs.get("summary"))
-            out["requestBody"] = ""
-
-        # responses
-        try:
-            if "200" in docs["responses"]:
-                out["responses"] = docs["responses"]["200"]
-        except KeyError:
-            print("local" + docs.get("summary"))
-            out["responses"] = ""
-
-        return out
-
     # endpoints = [
     #     (name, description, operationId, reduce_endpoint_docs(docs))
     #     for name, description, operationId, docs in endpoints
@@ -131,7 +100,7 @@ def format_endpoint_docs_text(endpoint_docs):
     # Add description
     if "description" in endpoint_docs:
         text_parts.append(f"Description: {endpoint_docs['description']}\n")
-    
+
     # Add parameters
     if "parameters" in endpoint_docs and endpoint_docs["parameters"]:
         text_parts.append("Parameters:")
@@ -140,42 +109,113 @@ def format_endpoint_docs_text(endpoint_docs):
             text_parts.append(f"  in: {param.get('in', 'N/A')}")
             text_parts.append(f"  required: {param.get('required', 'undefined')}")
             text_parts.append(f"  description: {param.get('description', 'N/A')}\n")
-    
+
     # Add request body
-    if "requestBody" in endpoint_docs and isinstance(endpoint_docs["requestBody"], dict):
+    if "requestBody" in endpoint_docs and isinstance(
+        endpoint_docs["requestBody"], dict
+    ):
         text_parts.append(format_request_body(endpoint_docs))
 
     return "\n".join(text_parts)
 
+
+def create_example_from_schema(schema):
+    """Create an example object from a schema definition."""
+    example_obj = {}
+    if "properties" in schema:
+        for prop_name, prop_schema in schema["properties"].items():
+            if "properties" in prop_schema:
+                example_obj[prop_name] = create_example_from_schema(prop_schema)
+            else:
+                example_obj[prop_name] = prop_schema.get("example") or prop_schema.get("default") or ""
+    return example_obj
+
 def format_request_body(endpoint_docs):
+    """Format request body documentation similar to TypeScript version."""
+    if not endpoint_docs.get("requestBody"):
+        return "No request body"
+
     text_parts = []
-    text_parts.append("Request Body:")
     request_body = endpoint_docs["requestBody"]
-        
-        # Add description if present
+    
+    # Add description if present
     if request_body.get("description"):
-        text_parts.append(f"  Description: {request_body['description']}")
+        text_parts.append(request_body["description"])
+    
+    # Handle content, focusing on application/json
+    if "content" in request_body and "application/json" in request_body["content"]:
+        json_content = request_body["content"]["application/json"]
         
-    if "content" in request_body:
-        content = request_body["content"]
-        if isinstance(content, dict):
-            for content_type, content_details in content.items():
-                if isinstance(content_details, dict):  # Make sure content_details is a dict
-                    text_parts.append(f"  Content Type: {content_type}")
-                        
-                    if "schema" in content_details:
-                        schema = content_details["schema"]
-                        if isinstance(schema, dict):
-                            if "allOf" in schema:
-                                text_parts.append("  Schema: Uses allOf reference")
-                            elif "type" in schema:
-                                text_parts.append(f"  Type: {schema['type']}")
-                        
-                    if "example" in content_details:
+        # Handle examples (top level examples)
+        if "examples" in json_content:
+            text_parts.append("\nExamples:")
+            for example_key, example in json_content["examples"].items():
+                if example.get("summary"):
+                    text_parts.append(f"\n{example['summary']}:")
+                else:
+                    text_parts.append(f"\n{example_key}:")
+                if example.get("value"):
+                    text_parts.append(yaml.dump(example["value"], default_flow_style=False))
+        
+        # Handle schema if no examples
+        elif "schema" in json_content:
+            schema = json_content["schema"]
+            
+            # Handle oneOf schemas - these are now dereferenced
+            if "oneOf" in schema:
+                text_parts.append("\nPossible Schemas:")
+                for sub_schema in schema["oneOf"]:
+                    if "properties" in sub_schema:
+                        example = create_example_from_schema(sub_schema)
                         text_parts.append("\nExample:")
-                        text_parts.append(yaml.dump(content_details["example"], default_flow_style=False))
-                    elif "examples" in content_details:
-                        text_parts.append("\nExamples:")
-                        for example_name, example in content_details["examples"].items():
-                            text_parts.append(f"{example_name}:")
-                            text_parts.append(yaml.dump(example.get("value", {}), default_flow_style=False))
+                        text_parts.append(yaml.dump(example, default_flow_style=False))
+            
+            # Handle allOf schemas - these are now dereferenced
+            elif "allOf" in schema:
+                text_parts.append("\nCombined Schema Example:")
+                # Merge all schemas in allOf
+                merged_example = {}
+                for sub_schema in schema["allOf"]:
+                    if "properties" in sub_schema:
+                        example = create_example_from_schema(sub_schema)
+                        merged_example.update(example)
+                text_parts.append(yaml.dump(merged_example, default_flow_style=False))
+            
+            # Handle regular schema
+            elif "properties" in schema:
+                example = create_example_from_schema(schema)
+                text_parts.append("\nExample:")
+                text_parts.append(yaml.dump(example, default_flow_style=False))
+    
+    return "\n".join(text_parts)
+
+# 3. Strip docs down to required request args + happy path response.
+def reduce_endpoint_docs(docs: dict) -> dict:
+
+    out = {}
+    if docs.get("description"):
+        out["description"] = docs.get("summary") + " - " + docs.get("description")
+    # parameters
+    if docs.get("parameters"):
+        out["parameters"] = [
+            parameter
+            for parameter in docs.get("parameters", [])
+            if parameter.get("required")
+        ]
+    # requestBody
+    try:
+        if docs.get("requestBody"):
+            out["requestBody"] = docs.get("requestBody")
+    except KeyError:
+        print("local" + docs.get("summary"))
+        out["requestBody"] = ""
+
+    # responses
+    try:
+        if "200" in docs["responses"]:
+            out["responses"] = docs["responses"]["200"]
+    except KeyError:
+        print("local" + docs.get("summary"))
+        out["responses"] = ""
+
+    return out

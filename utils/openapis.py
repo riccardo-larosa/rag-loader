@@ -70,23 +70,14 @@ def load_yaml_files(directory):
             # doc.metadata["operation_path"] = kebab_case_lodash_like(parent_folder)+"/"+kebab_case_lodash_like(reduced_spec.title)
             reduced_specs.append(doc)
             
-            # print("--------------------------------")
-            # print(f"title: {reduced_spec.title}")
-            # print(f"description: {len(reduced_spec.description) if reduced_spec.description else 0} characters \
-            #     and {count_tokens(reduced_spec.description) if reduced_spec.description else 0} tokens")
-            # print(f"servers: {reduced_spec.servers}\n")
             for endpoint in reduced_spec.endpoints:
-                print(f"""endpoint: {endpoint[0]} \
-                    description: {len(endpoint[1]) if endpoint[1] else 0} characters \
-                    docs: {len(str(endpoint[2])) if endpoint[2] else 0} characters """)
-                # if endpoint[0] == "GET /v2/carts/{cartID}":
-                #     print(f"description: {endpoint[1]}")
-                #     print(f"docs: {endpoint[2]}")
-                # create a document for each endpoint
+                print("--------------------------------")
+                print(f"endpoint: {endpoint[0]}")
                 doc = Document(page_content= endpoint[0] + " " + str(endpoint[3]))
+                doc.metadata["operationId"] = endpoint[2]
                 doc.metadata["id"] = endpoint[0]
                 doc.metadata["source"] = relative_path
-                doc.metadata["name"] = parent_folder
+                doc.metadata["api_name"] = parent_folder
                 doc.metadata["last_commit_date"] = last_commit_date
                 if endpoint[2]:  # Only add operation_path if endpoint[2] exists
                     # doc.metadata["operation_path"] = "docs/api/"+ kebab_case_lodash_like(parent_folder)+"/"+kebab_case_lodash_like(endpoint[2])
