@@ -64,8 +64,9 @@ def load_yaml_files(directory):
             print(f"Description: {reduced_spec.description}")
             #first create a document with the title and description
             doc = Document(page_content=reduced_spec.title + "\n" + str(reduced_spec.description))
-            doc.metadata["id"] = parent_folder
+            doc.metadata["id"] = "intro"
             doc.metadata["source"] = "docs/api/"+kebab_case_lodash_like(parent_folder)+"/"+kebab_case_lodash_like(reduced_spec.title)
+            doc.metadata["api_name"] = parent_folder
             doc.metadata["last_commit_date"] = last_commit_date
             # doc.metadata["operation_path"] = kebab_case_lodash_like(parent_folder)+"/"+kebab_case_lodash_like(reduced_spec.title)
             reduced_specs.append(doc)
