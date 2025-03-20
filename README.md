@@ -51,8 +51,9 @@ optional arguments:
 Example:
 
 ```bash
-python populate_openapi_db.py --openapi_dir_location ~/tmp_ep_dev/openapispecs
+python populate_openapi_db.py --openapi_dir_location ~/tmp_ep_dev/openapispecs/<subdirectory>
 ```
+remove /<subdirectory> to index all of them
 
 ## Notes
 - The chunk size is the size of the chunks to split the markdown files into.
